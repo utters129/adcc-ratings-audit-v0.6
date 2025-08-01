@@ -1,0 +1,367 @@
+ADCC Competitive Analytics Platform: A Comprehensive System Architecture Document
+
+
+Part 1: System Overview and Core Architecture
+
+This document presents a comprehensive system architecture for the Abu Dhabi Combat Club (ADCC) Competitive Analytics Platform. The platform is designed to be a definitive, data-driven system for managing and analyzing competitive grappling data. Its primary functions include automating the acquisition of event data, implementing a sophisticated Glicko-2 rating system, providing analytical tools to support decisions for Youth Worlds invitations and trial seeding, and acting as an automated registration auditor to ensure competitive integrity. This architecture is engineered for modularity, scalability, and maintainability, establishing a robust foundation for current needs and future expansion.
+
+1.1. Conceptual Architecture and Vision
+
+The system is envisioned as a multi-layered platform that systematically ingests, processes, stores, and presents competitive data. This architecture ensures a clear separation of concerns, allowing each component of the system to be developed, tested, and maintained independently. The conceptual model is composed of four distinct layers:
+Data Acquisition Layer: This outermost layer is the system's interface to the external world. Its sole responsibility is to interact with the data source, smoothcomp.com, to programmatically retrieve raw event registration and match data files.
+Processing & Storage Layer: This is the system's data engineering core. It takes the raw, unstructured data from the Acquisition Layer and executes a multi-stage pipeline to cleanse, normalize, enrich, and structure it. The output of this layer is clean, reliable data stored in a persistent, queryable format.
+Application Logic & API Layer: This layer serves as the brains of the operation. It houses the core business logic, including the Glicko-2 rating engine, medal and record calculation modules, and the query engine for generating leaderboards and athlete profiles. It exposes all system functionality through a well-defined Application Programming Interface (API), which acts as a contract for the Presentation Layer.
+Presentation Layer (UI): This is the client-facing component of the system. It consumes the API provided by the Application Logic Layer to present data to end-users. This layer is responsible for all user interaction, including displaying leaderboards, athlete profiles, statistical graphs, and the interface for the registration auditing tool.
+This layered approach ensures that changes in one part of the system have minimal impact on others. For example, if the data source website changes its layout, only the Data Acquisition Layer needs to be updated; the processing, logic, and UI layers remain unaffected.
+
+1.2. Foundational Architectural Principles
+
+The construction of the platform will be guided by established software engineering principles to ensure a high-quality, robust, and extensible system.
+Modularity and Separation of Concerns (SoC): The system will be decomposed into a collection of discrete, independent modules, each with a single, well-defined responsibility.1 For instance, a
+Scraper module will handle web interactions, a GlickoEngine will manage rating calculations, and a DataNormalizer will be responsible for data cleansing. This principle is fundamental to the architecture, as it facilitates parallel development, simplifies testing, and allows for targeted updates or replacement of individual components without affecting the entire system. This modularity is also key to enabling effective collaboration with AI-driven code generation tools, which operate most efficiently on well-defined, single-responsibility code blocks.
+High Cohesion, Low Coupling: This principle is a corollary to modularity. Functionality that is logically related will be grouped together within the same module (High Cohesion), while dependencies between different modules will be minimized (Low Coupling).1 The
+GlickoEngine, for example, will operate on clean match data and will have no knowledge of how that data was acquired or how it will be displayed. This decoupling makes individual modules easier to understand, reuse, and test in isolation, leading to a more resilient and maintainable codebase.
+ID-Based and State-Driven: The entire system operates on a foundation of unique, persistent identifiers for every core entity: athletes (Athlete_ID), events (Event_ID), divisions (Division_ID), and matches (Match_ID). All data processing and analytics are driven by these IDs. The system is fundamentally state-driven, particularly for chronological processes like the Glicko-2 rating updates. Data is processed in discrete, ordered steps corresponding to event timelines, with the system's state being saved after each step to ensure historical accuracy and support complex operations like data rollbacks.
+
+1.3. Project and Code Structure (File System Layout)
+
+A well-organized project structure is critical for maintainability and clarity. The proposed layout below separates configuration, data, source code, and tests into logical directories, following Python community best practices.
+
+
+
+adcc_analytics_system/
+├──.env                  # Stores sensitive credentials (e.g., Smoothcomp login)
+├──.gitignore
+├── requirements.txt      # Project dependencies
+├── main.py               # Main entry point/orchestrator for the entire pipeline
+├── config/
+│   └── config.py         # Global configuration (file paths, constants, Glicko tau)
+│   └── logging_config.json # Structured logging configuration
+├── data/
+│   ├── raw/              # Raw downloaded CSV/XLSX files
+│   │   ├── registrations/
+│   │   └── matches/
+│   ├── processed/        # Cleaned, standardized data (e.g., in Parquet format)
+│   │   ├── youth/
+│   │   ├── adult/
+│   │   └── masters/
+│   ├── datastore/        # The main application data files
+│   │   ├── athlete_database.json
+│   │   ├── division_map.json
+│   │   └── event_log.json
+│   └── reports/          # Generated output files (medal reports, audit lists)
+├── logs/                 # Rotated log files
+│   ├── system.log
+│   └── debug.log
+├── src/                  # Main source code, organized by module
+│   ├── __init__.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── models.py     # Core internal data structures (e.g., Athlete, Match classes)
+│   ├── data_acquisition/
+│   │   ├── __init__.py
+│   │   └── scraper.py    # Selenium/BS4 logic for Smoothcomp interaction
+│   ├── data_processing/
+│   │   ├── __init__.py
+│   │   ├── normalizer.py # Name, date, and data type normalization
+│   │   ├── id_generator.py # Creates A-, E-, D-, M- IDs
+│   │   └── classifier.py # Division classification logic
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── glicko_engine.py # Glicko-2 calculation and state management
+│   │   └── report_generator.py # Medal report and other statistical outputs
+│   ├── application/      # For the web UI
+│   │   ├── __init__.py
+│   │   ├── api.py # The main FastAPI backend server logic with all the API endpoints. 
+│   │   ├── schemas.py # The Pydantic models that define and validate our API data. 
+│   │   ├── static/ # Folder for all static assets (files that don't change). 
+│   │   │ ├── css/ 
+│   │   │ │ └── style.css # Main stylesheet for the application's visual appearance. 
+│   │   │   │   └── js/ 
+│   │   │   │   ├── leaderboard.js # JavaScript for the leaderboard page interactivity. 
+│   │   │   │   └── athlete_profile.js # JavaScript for the athlete profile page interactivity. 
+│   │   └── templates/ # Folder for all Jinja2 HTML templates. 
+│   │   │   ├── base.html # The main skeleton template that all other pages extend. 
+│   │   │   ├── leaderboard.html # The HTML structure for the main leaderboard page. 
+│   │   │   └── athlete_profile.html# The HTML structure for the detailed athlete profile page.
+│   └── utils/
+│       ├── __init__.py
+│       └── file_handler.py # Helper functions for reading/writing files
+└── tests/                # Unit and integration tests, mirroring src structure
+    ├── __init__.py
+    ├── test_data_processing.py
+    └── test_analytics.py
+
+
+
+1.4. Environment and Dependency Management
+
+To ensure a consistent and reproducible development and execution environment, the project will adhere to strict dependency management practices.
+Virtual Environments: The use of Python's built-in venv module is mandatory. This creates an isolated Python environment for the project, preventing conflicts between this project's dependencies and other Python projects on the same machine. This is a standard best practice that mitigates issues arising from differing library versions.1
+Dependency Specification: All external Python libraries required for the project will be explicitly listed in a requirements.txt file. This file will be generated using the command pip freeze > requirements.txt from within the activated virtual environment and serves as the single source of truth for project dependencies. Any new development environment can be set up identically by running pip install -r requirements.txt.
+Table: Core Python Libraries and Tools
+The selection of core libraries is a critical architectural decision. The following table outlines the chosen tools for each major system component, along with the rationale for their selection. This approach ensures that the best tool is chosen for each specific job, creating a powerful and efficient technology stack.
+
+Component
+Recommended Library/Tool
+Justification & Key Sources
+Web Interaction & Scraping
+Selenium + BeautifulSoup
+A hybrid approach is necessary. Selenium is indispensable for automating browser actions like logging in, navigating JavaScript-heavy pages, and clicking download buttons—tasks that are impossible for simpler libraries. Once the data is accessible, the page source will be passed to BeautifulSoup, which is significantly faster and more resource-efficient for parsing HTML and extracting data.2 This combines Selenium's interaction capabilities with BeautifulSoup's parsing performance.
+Web Application Framework
+FastAPI
+For the data-driven API required by the web UI, FastAPI is the optimal choice. It is built for high performance and supports asynchronous operations, making it faster than alternatives like Django and Flask.3 Its native integration with Pydantic for data validation and automatic generation of OpenAPI documentation are invaluable features for an API-centric application, reducing development time and errors.3
+Rating System
+glicko2 (PyPI package)
+The glicko2 library is a mature, stable, and widely-used Python implementation of the Glicko-2 rating system. It directly implements the public domain algorithm specified by its creator, Mark Glickman, ensuring mathematical correctness and adherence to the established standard.
+UI Name Suggestion Feature
+thefuzz (formerly FuzzyWuzzy)
+thefuzz is the industry-standard Python library for fuzzy string matching. Its process.extractOne utility is perfectly suited for the UI's "Did you mean?" feature, which suggests similar athlete names when a user's search query returns no exact match, enhancing user-friendliness.
+Data Handling & Analysis
+Pandas
+Pandas is the de-facto standard for data manipulation and analysis in Python. Its DataFrame object is essential for the efficient loading, cleaning, transformation, filtering, and analysis of the tabular registration and match data that will be downloaded in CSV and Excel formats.
+
+
+Part 2: The Data Acquisition Module (src/data_acquisition)
+
+This module is the system's gateway to external data. Its sole and critical function is to programmatically interface with smoothcomp.com, authenticate, and download the raw data files required for the entire analytics pipeline. Its design prioritizes robustness, security, and maintainability.
+
+2.1. Web Interaction Technology Stack
+
+A combination of tools is required to reliably automate the data acquisition process from a modern, dynamic website.
+Selenium for Automation: The core of this module will be the Selenium library, which provides the capability to programmatically control a web browser. This is non-negotiable because the process requires actions that mimic a human user, such as entering credentials into a login form and clicking buttons to trigger file downloads. Selenium, driving a browser like Chrome via chromedriver, will handle the entire interactive session.
+BeautifulSoup for Parsing: While the primary objective is file downloading, there may be instances where ancillary data (e.g., event dates, locations) must be extracted directly from the HTML of the page. In these cases, a hybrid approach will be employed: Selenium will be used to navigate to the correct page and retrieve the fully-rendered HTML source code (driver.page_source). This HTML will then be passed to the BeautifulSoup library. BeautifulSoup is vastly more efficient and faster at parsing static HTML documents than Selenium's own element-finding methods, so this division of labor leverages the strengths of both tools.2
+Requests Library: In the event that investigation reveals direct, non-interactive API endpoints for file downloads, the requests library will be used. For simple HTTP GET or POST requests that do not require a rendered browser session, requests is significantly more lightweight and faster than Selenium.
+The design of the data acquisition process must account for the inherent fragility of web scraping. Any change to the front-end code of smoothcomp.com, such as altering the ID of a login button or the class of a download link, can break the scraper. This represents the single greatest point of failure in the entire system. Therefore, a primary task during the initial development phase should be to thoroughly investigate whether Smoothcomp provides any form of official or unofficial API for data access. This can be done by monitoring network traffic in the browser's developer tools while manually performing the download actions. Discovering a stable API endpoint would be a major advantage, as interacting with an API is far more robust and reliable than simulating user interactions on a volatile user interface.2 The
+scraper.py module should be built with this in mind, designed in a way that it could be easily swapped out for an api_client.py module in the future with minimal disruption to the rest of the system.
+
+2.2. Process Flow and Orchestration
+
+The scraping process will be orchestrated by the main.py script and executed by functions within src/data_acquisition/scraper.py.
+Step 1: Initialization and Session Management: To avoid logging in for every single file download, a single Selenium WebDriver instance will be initialized at the beginning of a batch processing run. This browser session will be maintained throughout the run, preserving the login state.
+Step 2: Secure Login: A dedicated login() function will be called once per session. It will navigate to the Smoothcomp login page and populate the username and password fields. These credentials will be securely loaded from the .env file, never hardcoded into the script.
+Step 3: Event Iteration: The main orchestrator will iterate through a list of unprocessed event_ids. For each one, it will invoke the primary scraping function, acquire_event_data(event_id).
+Step 4: File Download and Interaction: The acquire_event_data function will navigate to the specific event's registration and results pages. It will use Selenium's WebDriverWait feature to robustly handle page loading dynamics. This command instructs Selenium to wait for a specific condition (e.g., an element to be clickable) for a certain amount of time before throwing an error. This makes the script resilient to variations in network speed and page load times. The function will then programmatically click the download buttons.
+Step 5: File Management: Once a file is downloaded to the browser's default download directory, the script will use Python's os and shutil modules to locate the most recently downloaded file, rename it to include its corresponding Event_ID (e.g., E12345_registrations.csv), and move it to the appropriate subdirectory within data/raw/. This systematic naming and organization are crucial for traceability.
+
+2.3. Resilience and Error Handling
+
+Given the brittle nature of web scraping, robust error handling and security measures are paramount.
+Credential Security: User credentials for Smoothcomp will be stored as environment variables in a .env file at the project root. This file will be explicitly listed in .gitignore to prevent it from ever being committed to version control. The python-dotenv library will be used within the application to load these credentials into the environment at runtime, ensuring they are kept separate from the source code.
+Handling Website Changes: To minimize the effort required to fix the scraper when the target website changes, all Selenium selectors (e.g., XPath, CSS selectors, element IDs) used to find elements on the page will be defined as constants in the central config/config.py file. This isolates these fragile values in one location, so a developer only needs to update the config file rather than hunting through the scraper's logic.
+Error Logging: The scraper will be wrapped in comprehensive try...except blocks to gracefully handle common Selenium exceptions, such as NoSuchElementException (an element could not be found) and TimeoutException (an element did not appear within the specified wait time), as well as general network errors. When an error occurs during the processing of a specific event, the exception will be caught, and a detailed error message, including the event_id and a stack trace, will be logged to the system's log file. The process will then continue to the next event, preventing a single failure from halting the entire batch run.
+
+Part 3: The Data Processing and Transformation Pipeline (src/data_processing)
+
+This part of the system is the engine room, responsible for the Extract, Transform, Load (ETL) process. It ingests the raw, often inconsistent, data files downloaded by the acquisition module and transforms them into clean, structured, standardized, and enriched datasets that are ready for the analytics and application layers. This pipeline ensures data quality and consistency, which is foundational to the reliability of the entire platform.
+
+3.1. Pipeline Orchestration
+
+The execution of the processing pipeline is controlled by the main orchestrator script, main.py. This script ensures a sequential and logical flow of operations.
+Event Selection: The orchestrator first identifies new events that need processing. It does this by comparing the list of all known events against a log of already processed events, ensuring that only new events that have occurred in the past are added to the processing queue.
+Data Acquisition Trigger: For each new event in the queue, the orchestrator calls the data_acquisition module to download the corresponding raw registration and match files.
+Data Ingestion: Once the raw files are confirmed to be present in the data/raw/ directory, the pipeline begins. It uses the Pandas library (pd.read_csv or pd.read_excel) to load the raw data into DataFrame objects, which are highly optimized for this type of data manipulation.
+Transformation Cascade: The raw DataFrame is then passed through a series of transformation functions, each residing in a dedicated module within src/data_processing. This includes normalization, ID generation, and classification.
+Data Persistence: Finally, after all transformations are complete, the cleaned and segregated DataFrames for Youth, Adult, and Masters are saved to the data/processed/ directory. Using a format like Parquet is recommended for this step, as it is more efficient for storage and read/write operations than CSV.
+
+3.2. Data Cleansing and Normalization (normalizer.py)
+
+The normalizer.py module is responsible for cleaning and standardizing the data to ensure consistency.
+Athlete ID Association: Since the incoming raw data from Smoothcomp contains a unique, persistent ID for each athlete, the system will operate on a purely ID-based foundation. This eliminates the need for fragile name-based matching and makes the data pipeline significantly more robust. The process is as follows:
+For each record in a new registration or match file, the system reads the smoothcomp_id.
+It uses the id_generator to create the corresponding internal Athlete_ID (e.g., A + smoothcomp_id).
+The system checks if this Athlete_ID already exists as a key in the master athlete_database.json.
+If the ID exists: The system updates the athlete's profile with the latest_name and latest_team from the new record. It also adds the new name to the list of aliases if it's not already present.
+If the ID does not exist: The system creates a new entry in the database for this Athlete_ID, populating it with the athlete's name, team, and initializing their rating and record data.
+This direct, ID-driven process ensures 100% accuracy in associating data with the correct athlete from start to finish.
+Data Type and Character Normalization: This function will perform a series of routine but essential cleaning tasks. It will handle character encoding issues, ensuring all text is consistently handled as UTF-8. All string-based fields will be standardized by converting them to lowercase and stripping leading/trailing whitespace. Columns intended to be numeric will be scrubbed of any non-numeric characters (like currency symbols or text) and converted to the appropriate numeric types (integer or float). Date columns will be parsed and converted into standard datetime objects for consistent chronological sorting and filtering.
+
+3.3. ID Generation System (id_generator.py)
+
+This module centralizes the creation of all unique identifiers used throughout the system, ensuring a consistent and predictable ID format.
+generate_athlete_id(smoothcomp_id): Returns a string prefixed with 'A' (e.g., $A123456$).
+generate_event_id(smoothcomp_id): Returns a string prefixed with 'E' (e.g., $E98765$).
+generate_match_id(event_id, division_id, match_index): Creates a composite, unique ID for every match, combining the event ID, division ID, and the match's sequential index within the event (e.g., $M-E98765-Dabc123-15$).
+generate_division_id(division_string): This is a sophisticated function designed to create a logical, human-readable, and consistent ID for each division. Instead of an unreadable hash, the ID will be a composite key that transparently reflects the division's characteristics. The proposed format is D-<AgeCode>-<GenderCode>-<SkillCode>-<WeightCode>.
+<AgeCode>: Combines the Age Class (Y, A, M) and the specific age group (e.g., 12U, 16U, 30P). For a standard Adult division, it might simply be 'A'. Example: Y12U, M30P, A.
+<GenderCode>: A single letter for gender (e.g., M, F).
+<SkillCode>: A standardized three-letter code for the skill level (e.g., BGN, INT, ADV, PRO).
+<WeightCode>: A standardized code for the weight class (e.g., W88KG for -88kg, WP99KG for +99kg, ABS for Absolute).
+For example, a raw division string like "Youth / Male / 14 & Under / Advanced / -70kg" would be parsed and converted into the ID D-Y14U-M-ADV-W70KG. This logical structure makes the data far more intuitive for debugging and manual analysis.
+
+3.4. Division Classification Tool (classifier.py)
+
+This tool is responsible for parsing division information and assigning the correct Division_ID. It employs a caching mechanism to avoid redundant work.
+The tool maintains a persistent lookup map, division_map.json, which stores mappings from raw division name strings encountered in the past to their assigned canonical Division_ID.
+When processing a new event's data, for each division, the tool first checks if the division's name string (or a very close fuzzy match) already exists as a key in the division_map.json.
+If a match is found, the existing Division_ID is retrieved and used, saving processing time.
+If the division name is new, the tool proceeds to parse the string, using regular expressions or string splitting to extract key attributes: Age Class (Youth, Adult, Masters), Gender, Weight Category, and Skill Level. Based on these attributes, it generates a new Division_ID using the id_generator module. This new mapping (from the original raw string to the new ID) is then saved to division_map.json for future use.
+
+3.5. Age-Class Data Streaming
+
+To ensure the absolute separation of rating pools for different age categories, a critical step in the pipeline is to split the data stream.
+After the initial cleaning and classification stages, the main event DataFrame will contain a new 'age_class' column populated by the Division Classification Tool.
+This DataFrame is then filtered to create three distinct, independent DataFrames:
+df_youth = df[df['age_class'] == 'Youth']
+df_adult = df[df['age_class'] == 'Adult']
+df_masters = df[df['age_class'] == 'Masters']
+From this point forward, all subsequent processing functions—most importantly the Glicko rating calculations and record updates—will be invoked three separate times, once for each of these age-class-specific DataFrames. This architectural choice strictly enforces the requirement that athletes in different age categories never have their ratings influence one another.
+
+Part 4: Core Data Models and State Management
+
+This section defines the architecture of the system's persistent data stores. These structures represent the canonical "source of truth" for all processed information and are designed to support the complex analytical and historical requirements of the platform, including chronological calculations and data rollbacks.
+
+4.1. The Master Athlete Data Store (athlete_database.json)
+
+The athlete_database.json file is the central repository of all information related to every competitor in the system. It is structured as a JSON object where the top-level keys are the unique Athlete_IDs (e.g., $A123456$). This key-value structure allows for rapid lookup of any athlete's complete profile. The data for each athlete is comprehensive and segmented by age class to maintain data separation.
+The structure for a single athlete entry is as follows:
+
+JSON
+
+
+"A123456": {
+  "smoothcomp_id": 123456,
+  "aliases":,
+  "latest_name": "John Doe",
+  "latest_team": "Team Alpha BJJ",
+  "youth": {
+    "highest_skill_level": "Advanced",
+    "debut_skill_level": "Intermediate",
+    "glicko": {"rating": 1620.5, "rd": 75.3, "vol": 0.059},
+    "record": {"wins": 12, "losses": 3, "draws": 1},
+    "tournaments": {
+      "E98765": {
+        "divisions":,
+        "placement": 1
+      },
+      "E98770": {
+        "divisions":,
+        "placement": 3
+      }
+    }
+  },
+  "adult": {
+    "highest_skill_level": "Professional",
+    "debut_skill_level": "Advanced",
+    "glicko": {"rating": 1850.1, "rd": 55.0, "vol": 0.06},
+    "record": {"wins": 5, "losses": 1, "draws": 0},
+    "tournaments": {}
+  },
+  "masters": {
+    "highest_skill_level": null,
+    "debut_skill_level": null,
+    "glicko": {"rating": 1500, "rd": 350, "vol": 0.06},
+    "record": {"wins": 0, "losses": 0, "draws": 0},
+    "tournaments": {}
+  }
+}
+
+
+
+4.2. The Glicko-2 Rating Engine (src/analytics/glicko_engine.py)
+
+This module encapsulates all logic for calculating and updating athlete ratings using the Glicko-2 system.
+Library and Configuration: The engine will be built upon the glicko2 Python package available on PyPI, which is a stable and mature implementation of the algorithm. The Glicko-2 system includes a "system constant," $τ$ (tau), which constrains the change in rating volatility over time. This value will be defined as a configurable parameter in config/config.py. Based on Glickman's documentation and common practice, a reasonable starting value for $τ$ is 0.5.4
+Glicko-2 Principles: The implementation will strictly adhere to the principles of the Glicko-2 system. Each player's rating is represented by three values: the rating itself ($r$), the rating deviation ($RD$), and the rating volatility ($\sigma$). The $RD$ measures the reliability of the rating; a lower $RD$ indicates a more reliable rating. The volatility, $\sigma$, measures the degree of expected fluctuation in a player's rating. As per the Glicko-2 specification, new, unrated players will be initialized with default values: $r = 1500$, $RD = 350$, and $\sigma = 0.06$.4
+Custom Win-Weighting Modification: To more accurately reflect the decisiveness of different victory types in Jiu-Jitsu, the system will implement a custom modification to the standard Glicko-2 algorithm. While the standard algorithm uses a fixed score of 1.0 for a win, this system will use a variable score based on the win condition (e.g., 1.0 for a decision, 1.1 for points, 1.2 for submission). The underlying mathematical formulas of Glicko-2 can accommodate this change, as the outcome score (s_j) is a variable in the core equations.4 This will be achieved by creating a custom version of the Glicko-2 calculation function, based on a standard library, that accepts these weighted scores.
+Processing Logic: The Hybrid "Instant Update" Model: To provide users with timely feedback while correctly handling periods of inactivity, the system will use a hybrid model for rating updates. This approach combines the feel of instant updates with the mathematical rigor of fixed time periods.
+Underlying Rating Period: The system will define a fixed, underlying rating period of one calendar month. This period is the basis for the "official" calculations that handle the time-based increase in Rating Deviation (RD) for inactive players, a core feature of the Glicko-2 system.
+Provisional Updates: Immediately after an event is processed, the system will calculate and display updated ratings for all participants. These updates are provisional because they do not yet account for the time-based RD increase that occurs at the end of the month. This provides the instant feedback users expect.
+Monthly Finalization: At the end of each calendar month, a background process will run to finalize the ratings. This process performs two key steps:
+It first applies the RD increase for any player who was inactive during that month.
+It then re-calculates and finalizes the ratings for all players based on the complete set of matches that occurred within that month.
+This hybrid model ensures that the system is both responsive and accurate, correctly modeling player skill over time even with irregular tournament schedules.
+
+4.3. Chronological Processing and State Management (The Save State System)
+
+The Glicko-2 algorithm is path-dependent, meaning a player's rating after a rating period is calculated based on their rating from the previous period. This creates a significant architectural challenge, especially given the requirement to process events that may be added out of chronological order and to support data rollbacks. A simple approach of recalculating all ratings from scratch every time a new event is added would be computationally prohibitive and would not meet the project's performance goals.
+To solve this, a robust state management system is required. This system treats the entire data store as a series of chronological snapshots based on the finalized monthly rating periods.
+Architectural Solution: The system will maintain an event_log.json file, which records the Event_ID and date of every event that has been processed, sorted chronologically. After the successful finalization of a monthly rating period (e.g., end of January 2025), the system will save a complete snapshot of the athlete_database.json file to a versioned file, such as athlete_database_post_2025-01.json.
+Rollback Functionality: To roll back the system's state to a specific date, the user will trigger a function that consults the event_log.json. The system will identify the last finalized monthly rating period before the target rollback date and load the corresponding state file (e.g., athlete_database_post_2024-12.json) as the current athlete_database.json. All subsequent state files and log entries will be deleted.
+Out-of-Order Processing: If a new event from a past month (e.g., an event from June 2024 is added in August 2024) is added to the system, the state management logic will handle it gracefully and efficiently. It will:
+Automatically trigger a rollback to the state immediately preceding the month of the new event (i.e., load the athlete_database_post_2024-05.json state).
+Process the June 2024 rating period, now including the new event, and finalize the ratings.
+Save the new state snapshot (athlete_database_post_2024-06.json).
+Sequentially re-process all subsequent monthly rating periods (July, etc.) that had already been processed. Crucially, this re-processing step only involves the analytical calculations (Glicko, records); it does not need to re-download or re-clean the data for those events, as the clean data is already stored in the data/processed/ directory. This "re-play" mechanism ensures 100% historical accuracy while being far more efficient than a full system reset.
+
+4.4. Report Generation Modules (src/analytics/report_generator.py)
+
+This module is responsible for creating user-facing data artifacts, such as the comprehensive medal report.
+Comprehensive Medal Report: This function will be triggered only when new, unprocessed events are being added to the system. As the pipeline iterates through the cleaned match data for an event to update athlete records and placements, it will simultaneously update the medal report. Using a library like openpyxl or Pandas' ExcelWriter, it will open the master medal_report.xlsx file. For each athlete who medaled (placement 1, 2, or 3), the function will locate the corresponding athlete's row and the correct nested column for the division's age class and skill level, and then increment the appropriate cell for their Gold, Silver, Bronze, and Total medal counts. This "rolling update" approach is efficient as it avoids regenerating the entire report from scratch.
+
+4.5. Hard Reset and Dummy Athletes
+
+To handle administrative needs and data corruption, the system will include the following features.
+Hard Reset Utility: A standalone utility script will be provided. When executed, this script will perform a hard reset by deleting all files within the data/processed/, data/datastore/, and data/reports/ directories. This action effectively returns the system to a clean, empty state, ready to begin processing from scratch.
+Dummy Athlete Handling: To prevent the entire processing pipeline from crashing due to a single corrupted or unparseable athlete record in a raw file, a fallback mechanism will be implemented. If the normalizer.py module fails to process an athlete's data, it will log a critical error with the problematic data, substitute a pre-defined "Dummy Athlete" record in its place, and allow the pipeline to continue. This Dummy Athlete will have a unique, reserved ID (e.g., $A000000$) and will be explicitly filtered out of all final reports and UI-facing queries to ensure it does not pollute the analytical results.
+
+Part 5: The Application Layer and User Interface (UI)
+
+This section addresses the client-facing portion of the platform, which is critical for making the system's powerful analytics accessible and useful to its target audience, including non-technical users like coaches and administrators.
+
+5.1. Architectural Choice: A Web-Based Application
+
+The system will be delivered as a web-based application. This architecture was chosen for its significant advantages in accessibility, performance, and maintainability, ensuring the best possible experience for all users.
+Universal Accessibility: A web application is accessible from any modern web browser on any device (PC, Mac, tablet) without requiring any installation. This removes barriers to entry and simplifies distribution.
+Superior Performance: The web architecture provides a clear and decisive advantage in performance. The heavy data processing pipeline is run offline on the server, for example, as a nightly scheduled task. The live web application that the user interacts with does not perform this processing; it simply executes fast queries against the already-processed data stored in the datastore. This means the user experiences near-instantaneous load times and responses.
+Seamless Updates: Updates to the application logic or data are deployed centrally on the server. This means every user instantly has access to the latest version of the platform without needing to download or install anything.
+The technology stack for the web application is as follows:
+Backend Framework: The web server's backend will be built using FastAPI. This modern Python framework is designed specifically for building high-performance APIs. It includes native support for asynchronous operations, robust data validation through Pydantic, and automatic generation of interactive API documentation, all of which accelerate development and improve system reliability.3
+Hosting: The application will be hosted on a Platform-as-a-Service (PaaS) provider designed for Python applications. Services like PythonAnywhere, Render, or Heroku are excellent choices. They simplify deployment, manage server infrastructure, handle scaling, and offer free or low-cost tiers that are perfect for developing and launching the project.5 The existing Wix website is not a suitable host, as it does not support direct Python backend hosting.9
+
+5.2. UI Feature Implementation Blueprint
+
+Based on the web-based architecture, the following blueprint outlines the implementation of the key features.
+API Endpoints (api.py): The FastAPI application will expose a set of well-defined endpoints to serve data to the frontend.
+GET /api/athletes: Returns a paginated list of all athletes. Supports query parameters for filtering by name, team, etc.
+GET /api/athlete/{athlete_id}: Returns the complete JSON data object for a single athlete.
+GET /api/top_lists: A powerful and flexible endpoint for generating leaderboards. It will accept query parameters such as age_class, skill_level, gender, weight_category, season_start_date, season_end_date, and sort_by (elo, points, medals).
+POST /api/audit_event: An endpoint that accepts a Smoothcomp event URL. It triggers the registration auditing process on the backend.
+Frontend Design and Interactivity:
+Leaderboard Page: This page will feature a dynamic table. A JavaScript library like DataTables.js can be used to provide client-side features like sorting, searching, and pagination. A set of controls (dropdown menus, date pickers) will allow the user to configure the filters. Changing a filter will trigger a new API call to the /api/top_lists endpoint, and the table will be redrawn with the new data.
+Athlete Profile Page: This page will display the summary information returned from the /api/athlete/{athlete_id} endpoint. A key feature will be a historical ELO rating graph. This can be implemented using a JavaScript charting library like Chart.js, which will take the athlete's historical rating data and render it as a line graph.
+"Did You Mean?" Name Suggestion Feature: To enhance user experience, when a user searches for an athlete by name and no exact match is found, the API will not simply return a "404 Not Found" error. Instead, the backend will use the thefuzz.process.extract(query, list_of_all_athlete_names, limit=3) function to find the three most similar names in the database. These suggestions will be returned in the JSON response, allowing the frontend to display a "Did you mean: [Name1], [Name2], or [Name3]?" message to the user.
+Future Registration Auditor Flow: The web interface will make this a simple, one-click process.
+The user navigates to the "Audit Event" page in the UI.
+They paste the URL of a future Smoothcomp event into an input field and click an "Audit Registrations" button.
+The frontend sends a POST request to the /api/audit_event endpoint with the URL in the request body.
+The FastAPI backend receives the request and triggers a background task that executes the full audit logic: it calls the scraper to download the registration CSV, processes the file to normalize names and link them to existing Athlete_IDs, compares each athlete's registered division against their medal history in the athlete_database.json, and compiles a list of flagged athletes.
+Once the process is complete, the API endpoint returns this list as a JSON array.
+The frontend receives the response and displays the list of potentially sandbagging athletes to the user.
+
+Part 6: System Operations and Engineering Best Practices
+
+This final section details the non-functional requirements and operational practices that are essential for creating a system that is not only powerful but also robust, maintainable, secure, and easy to debug. These practices form the professional foundation upon which the application is built.
+
+6.1. Comprehensive Logging and Debugging Framework
+
+A systematic approach to logging is crucial for monitoring the application's health and diagnosing issues, especially in a complex, multi-stage data pipeline.
+Strategy and Configuration: The system will use Python's built-in logging module. Configuration will not be scattered throughout the code using basicConfig. Instead, it will be centralized in a single logging_config.json file. This file will define all loggers, handlers, and formatters. At application startup, this configuration will be loaded using the logging.config.dictConfig() function.11 This approach provides a clean separation of logging configuration from application logic.
+Module-Level Loggers: A fundamental best practice is to avoid using the root logger. Every Python module (.py file) in the src/ directory will instantiate its own logger at the top of the file with the line: logger = logging.getLogger(__name__). The __name__ variable automatically provides the logger with a name corresponding to the module's path (e.g., src.data_processing.normalizer). This allows for extremely granular control over logging; for example, the log level for just the scraper module can be set to DEBUG without affecting the rest of the application.12
+Structured Logging (JSON Format): To facilitate automated analysis and searching, all log output will be formatted as JSON strings rather than plain text. Each log entry will be a key-value object containing standard fields like timestamp, level, module, and message, as well as custom contextual data (e.g., event_id, athlete_id). This machine-readable format is invaluable for log management platforms and makes querying for specific error conditions trivial.13 A library like
+structlog or a custom logging.Formatter class can be used to implement this.
+Log Rotation: To prevent log files from growing to an unmanageable size, log rotation will be implemented. The logging.handlers.TimedRotatingFileHandler will be configured to automatically create a new log file at a set interval (e.g., daily at midnight) and will keep a specified number of old log files as backups (e.g., backupCount=14 to retain two weeks of logs).14 This ensures that disk space is managed effectively without losing recent historical log data.
+Debugging File I/O: To meet the requirement for debugging data transformations, the logger will be used to capture snapshots of data at critical points. Before and after a major transformation function (like name normalization), a DEBUG level log message will be written containing a sample of the DataFrame (e.g., df.head().to_string()). This creates a clear audit trail in the debug log, showing the state of the data as it moves through the pipeline and making it much easier to pinpoint where data corruption or unexpected changes occur.
+
+6.2. Guidelines for AI-Assisted Development
+
+To maximize the effectiveness of using an AI code assistant like Gemini for development, the source code must be structured in a way that provides the AI with maximum context and clarity.
+Explicit Type Hinting: All function signatures, variable declarations, and class attributes will use Python's standard type hints (e.g., def process_matches(match_data: pd.DataFrame) -> dict:). This is arguably the most important practice, as it explicitly tells the AI the expected data types for inputs and outputs, dramatically reducing ambiguity and leading to more accurate and robust code generation.1
+Detailed Docstrings: Every function and class will be documented with a comprehensive docstring, following a standard format like Google Style. The docstring will clearly explain the component's purpose, describe each argument (Args:), detail what the function returns (Returns:), and list any exceptions it might raise (Raises:). This serves as a human-readable specification that the AI can also parse to understand the intended behavior.
+Explanatory Comments: While the code should be as self-documenting as possible, comments will be used to explain the why, not the what. This is especially important for complex business logic, such as the specific criteria for Youth Worlds invitations or the rules for identifying sandbagging. These comments provide crucial domain-specific context that the AI cannot infer on its own.
+Modular and Focused Prompts: When prompting the AI to write or refactor code, the prompts should be modular, aligning with the project's architecture. Instead of asking it to "write the whole program," provide it with the complete, well-documented code for a single module (e.g., the contents of normalizer.py) and a clear instruction, such as: "Given this module and the following data structure for an athlete, add a function that normalizes international phone numbers." This focused approach respects the AI's context limitations and yields far better results than broad, ambiguous requests.
+Works cited
+How to design modular Python projects - LabEx, accessed July 16, 2025, https://labex.io/tutorials/python-how-to-design-modular-python-projects-420186
+Selenium vs. BeautifulSoup in 2025: Which to Choose? - Oxylabs, accessed July 16, 2025, https://oxylabs.io/blog/selenium-vs-beautifulsoup
+Which Is the Best Python Web Framework: Django, Flask, or FastAPI ..., accessed July 16, 2025, https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/
+Example of the Glicko-2 system - Mark Glickman, accessed July 16, 2025, https://glicko.net/glicko/glicko2.pdf
+Top 8 Python Hosting Providers in 2025 - GeeksforGeeks, accessed July 16, 2025, https://www.geeksforgeeks.org/top-python-hosting-providers/
+PythonAnywhere: Host, run, and code Python in the cloud, accessed July 16, 2025, https://www.pythonanywhere.com/
+5 Best Free Hosting Platforms for Python Apps in 2024 | by Akshay | Medium, accessed July 16, 2025, https://medium.com/@learnwithakshay/5-best-free-hosting-platforms-for-python-apps-in-2024-aed493b3cf11
+10 Best Python Web Hosting Providers in 2025 - Diggity Marketing, accessed July 16, 2025, https://diggitymarketing.com/web-hosting/python/
+forum.wixstudio.com, accessed July 16, 2025, https://forum.wixstudio.com/t/python-machine-learning-backend-program/41678#:~:text=You%20cannot%20use%20python%20in,Wix%20site%20using%20Wix%20Fetch%20.
+Implement a Backend for Your App - Wix Developers, accessed July 16, 2025, https://dev.wix.com/docs/build-apps/develop-your-app/frameworks/wix-cli/app-development/implement-a-backend-for-your-app
+Logging HOWTO — Python 3.13.5 documentation, accessed July 16, 2025, https://docs.python.org/3/howto/logging.html
+10 Best Practices for Logging in Python | Better Stack Community, accessed July 16, 2025, https://betterstack.com/community/guides/logging/python/python-logging-best-practices/
+12 Python Logging Best Practices To Debug Apps Faster - Middleware, accessed July 16, 2025, https://middleware.io/blog/python-logging-best-practices/
+Python Logging Best Practices - Expert Tips with Practical Examples - SigNoz, accessed July 16, 2025, https://signoz.io/guides/python-logging-best-practices/

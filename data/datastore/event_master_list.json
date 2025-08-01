@@ -1,0 +1,23 @@
+{
+  "events": [
+    {
+      "id": "E12692",
+      "name": "ADCC Chicago Open",
+      "date": "2023-09-09",
+      "type": "open",
+      "country": "United States",
+      "smoothcomp_available": true,
+      "adcc_region": "North American Trials",
+      "multi_day": false,
+      "gi_event": false,
+      "no_gi_event": true,
+      "processed": true,
+      "files_downloaded": [
+        "registrations.csv",
+        "matches.xlsx",
+        "registrations.json"
+      ],
+      "files_missing": []
+    }
+  ]
+}

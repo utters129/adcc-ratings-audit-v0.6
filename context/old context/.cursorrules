@@ -1,0 +1,47 @@
+# ==============================================================================
+# FILE:.cursorrules
+#
+# PROJECT: ADCC Competitive Analytics Platform
+#
+# PURPOSE:
+# This file provides persistent, high-level instructions to the Cursor AI.
+# It ensures that all generated code adheres to the specific architectural
+# principles, best practices, and logic we have defined for this project.
+# The AI must follow these rules in all its responses.
+#
+# ==============================================================================
+
+### 1. High-Level Project Goal
+
+- Your primary goal is to implement the ADCC Competitive Analytics Platform, a Python-based web application.
+- The core features are data scraping from Smoothcomp, a Glicko-2 rating system, registration auditing, and a user-friendly web UI for data analysis.
+- Always refer to the `@README.md` and the '@architecture.txt' files for the high-level project overview before generating code.
+
+### 2. Core Architectural Principles (Non-Negotiable)
+
+- **Preserve the Architecture:** The project is highly modular. Do not change the existing file or folder structure. Only generate code for the file you are currently working on. Do not propose changes that would break the separation of concerns between modules (e.g., do not put data scraping logic inside the analytics engine).
+- **Strictly ID-Based:** The entire system operates on unique IDs (`Athlete_ID`, `Event_ID`, `Division_ID`, `Match_ID`). All logic, calculations, and data lookups MUST use these IDs. Do not write logic that relies on matching athlete names or other strings.
+- **Respect the Data Pipeline:** The data flows in one direction: `raw` -> `processed` -> `datastore`. Do not write code that modifies raw or processed data files after they have been created. The `GlickoEngine` should only ever read from `processed` data and write to the `datastore`.
+
+### 3. Code Generation and Style Guidelines
+
+- **Follow the Blueprints:** Your primary instruction is to implement the code exactly as described in the detailed comments of each file. The comments are the source of truth for what the code should do.
+- **Python Best Practices:**
+    - All Python code must strictly follow PEP 8 style guidelines.
+    - All functions, methods, and class variables MUST include comprehensive type hints.
+    - All classes and functions MUST have detailed docstrings explaining their purpose, parameters, and return values.
+- **Surgical Changes:** Your changes must be surgical. Only add or modify the code required to fulfill the instructions in the comments. Do not refactor or reformat existing, working code unless explicitly asked to do so.
+- **Modularity and Organization:** The code you generate within each file must be well-organized, clean, and readable. Use helper functions to break down complex logic into smaller, manageable pieces.
+
+### 4. Debugging and Error Handling
+
+- **Comprehensive Logging:** Every file must include extensive debugging and informational logging.
+    - Always use a module-level logger (`logger = logging.getLogger(__name__)`). Never use the root logger or `print()` statements for logging.
+    - Add detailed log messages at the beginning and end of major functions.
+    - For any function that reads from or writes to a file, add a `DEBUG` level log message showing a sample of the data being read or written. This is critical for debugging.
+- **Robust Error Handling:**
+    - Use `try...except` blocks to handle potential errors gracefully, especially during file I/O and web scraping.
+    - When processing athlete data, if an unrecoverable error occurs for a single athlete's record, the system must not crash. It should log the error and use the "Dummy Athlete" concept as a placeholder to allow the rest of the pipeline to continue.
+
+- Once we determine a bit of code is working, don't change it unless it is absolutely necessary!
+- Always include copious amounts of debug code so we can easily debug at all steps.

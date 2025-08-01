@@ -1,0 +1,34 @@
+{
+  "A123456": {
+    "smoothcomp_id": 123456,
+    "aliases": [
+      "John Doe",
+      "J. Doe"
+    ],
+    "latest_name": "John Doe",
+    "latest_team": "Team Alpha BJJ",
+    "youth": {
+      "highest_skill_level": "Advanced",
+      "debut_skill_level": "Intermediate",
+      "tournaments": {
+        "E98765": {
+          "divisions": [
+            "D001",
+            "D002"
+          ],
+          "placement": 1
+        }
+      }
+    },
+    "adult": {
+      "highest_skill_level": "Advanced",
+      "debut_skill_level": "Advanced",
+      "tournaments": {}
+    },
+    "masters": {
+      "highest_skill_level": "Intermediate",
+      "debut_skill_level": "Intermediate",
+      "tournaments": {}
+    }
+  }
+}
