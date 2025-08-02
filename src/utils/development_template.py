@@ -12,8 +12,8 @@ from datetime import datetime
 import traceback
 
 # Import project-specific modules
-from src.config.settings import LOG_LEVEL, LOGS_DIR
-from src.config.constants import *
+from src.core.constants import LOG_LEVEL, LOGS_DIR
+from src.core.constants import *
 
 # Set up structured logging
 logger = structlog.get_logger(__name__)

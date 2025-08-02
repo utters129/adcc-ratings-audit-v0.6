@@ -13,8 +13,8 @@ import tempfile
 import shutil
 
 # Import project-specific modules
-from src.config.settings import LOG_LEVEL, LOGS_DIR
-from src.config.constants import *
+from src.core.constants import LOG_LEVEL, LOGS_DIR
+from src.core.constants import *
 from src.utils.development_template import DevelopmentTemplate
 
 # Set up test logging
