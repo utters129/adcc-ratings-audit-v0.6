@@ -1,22 +1,27 @@
 """
 ADCC Analysis Engine v0.6 - File Handler Utilities
-Common file operations and utilities for the application.
+Common file operations for the ADCC analysis system.
 """
 
 import json
+import gzip
+import hashlib
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 import pandas as pd
 import logging
 
-from src.core.constants import (
-    DATA_DIR, RAW_DATA_DIR, PROCESSED_DATA_DIR, DATASTORE_DIR,
-    MAX_FILE_SIZE_MB, ALLOWED_FILE_TYPES, BACKUP_FILES
+from core.constants import (
+    PROCESSED_DATA_DIR, DATASTORE_DIR, LOGS_DIR
 )
-from src.utils.logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Constants for file operations
+ALLOWED_FILE_TYPES = ['json', 'csv', 'xlsx', 'parquet', 'txt']
+BACKUP_FILES = True
 
 
 def ensure_directory_exists(directory: Path) -> None:
