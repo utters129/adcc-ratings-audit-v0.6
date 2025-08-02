@@ -6,37 +6,40 @@ Dynamic, runtime-adjustable settings loaded from environment variables.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from typing import Optional
 
 # Load environment variables
 load_dotenv()
 
-# File Paths
-DATA_DIR = Path(os.getenv("DATA_DIR", "./data"))
-RAW_DATA_DIR = Path(os.getenv("RAW_DATA_DIR", "./data/raw"))
-PROCESSED_DATA_DIR = Path(os.getenv("PROCESSED_DATA_DIR", "./data/processed"))
-DATASTORE_DIR = Path(os.getenv("DATASTORE_DIR", "./data/datastore"))
-LOGS_DIR = Path(os.getenv("LOGS_DIR", "./logs"))
 
-# Web Server
-HOST = os.getenv("HOST", "0.0.0.0")
-PORT = int(os.getenv("PORT", "8000"))
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+class Settings:
+    """Application settings loaded from environment variables."""
+    
+    # Environment
+    environment: str = os.getenv("ENVIRONMENT", "development")
+    
+    # Smoothcomp Credentials
+    smoothcomp_username: Optional[str] = os.getenv("SMOOTHCOMP_USERNAME")
+    smoothcomp_password: Optional[str] = os.getenv("SMOOTHCOMP_PASSWORD")
+    
+    # Web UI Authentication
+    admin_username: str = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password: str = os.getenv("ADMIN_PASSWORD", "admin")
+    developer_username: str = os.getenv("DEVELOPER_USERNAME", "developer")
+    developer_password: str = os.getenv("DEVELOPER_PASSWORD", "developer")
+    secret_key: str = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
+    
+    # Railway Deployment
+    railway_volume_mount_path: Optional[str] = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
 
-# Authentication
-SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin")
-DEVELOPER_USERNAME = os.getenv("DEVELOPER_USERNAME", "developer")
-DEVELOPER_PASSWORD = os.getenv("DEVELOPER_PASSWORD", "developer")
 
-# Session Management
-SESSION_TIMEOUT_ADMIN = int(os.getenv("SESSION_TIMEOUT_ADMIN", "3600"))
-SESSION_TIMEOUT_DEVELOPER = int(os.getenv("SESSION_TIMEOUT_DEVELOPER", "1800"))
+# Global settings instance
+_settings: Optional[Settings] = None
 
-# Smoothcomp Credentials
-SMOOTHCOMP_USERNAME = os.getenv("SMOOTHCOMP_USERNAME")
-SMOOTHCOMP_PASSWORD = os.getenv("SMOOTHCOMP_PASSWORD")
 
-# Logging
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "14"))
+def get_settings() -> Settings:
+    """Get the global settings instance."""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
