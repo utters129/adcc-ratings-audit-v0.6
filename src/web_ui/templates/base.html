@@ -154,6 +154,82 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
     
+    <!-- Inline JavaScript for login functionality -->
+    <script>
+        // Fallback login functionality if main.js fails to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inline login script loaded');
+            
+            // Check if main.js loaded properly
+            if (typeof window.ADCC === 'undefined') {
+                console.log('Main.js not loaded, using fallback login');
+                setupFallbackLogin();
+            }
+        });
+        
+        function setupFallbackLogin() {
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function() {
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    if (!username || !password) {
+                        alert('Please enter both username and password.');
+                        return;
+                    }
+                    
+                    // Simple login request
+                    fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.access_token) {
+                            // Store token
+                            localStorage.setItem('authToken', data.access_token);
+                            
+                            // Close modal
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                            if (modal) {
+                                modal.hide();
+                            }
+                            
+                            // Show success message
+                            alert('Login successful!');
+                            
+                            // Reload page to update UI
+                            window.location.reload();
+                        } else {
+                            alert('Login failed: ' + (data.detail || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Login error:', error);
+                        alert('Login failed: ' + error.message);
+                    });
+                });
+            }
+            
+            // Logout functionality
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('authToken');
+                    window.location.reload();
+                });
+            }
+        }
+    </script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html> 
