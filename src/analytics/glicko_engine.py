@@ -9,10 +9,10 @@ from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import pandas as pd
 
-from core.constants import DATASTORE_DIR
-from core.models import Athlete, Match
-from utils.file_handler import save_json_file, load_json_file, save_parquet_file, load_parquet_file
-from utils.logger import get_logger
+from src.core.constants import DATASTORE_DIR
+from src.core.models import Athlete, Match
+from src.utils.file_handler import save_json_file, load_json_file, save_parquet_file, load_parquet_file
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

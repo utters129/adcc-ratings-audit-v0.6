@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 import structlog
 
-from core.constants import LOGS_DIR, LOG_LEVEL, LOG_RETENTION_DAYS
+from src.core.constants import LOGS_DIR, LOG_LEVEL, LOG_RETENTION_DAYS
 
 
 def setup_logging(

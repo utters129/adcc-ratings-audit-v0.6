@@ -12,10 +12,10 @@ from typing import Dict, Any, Optional, Union, List
 import pandas as pd
 import logging
 
-from core.constants import (
+from src.core.constants import (
     PROCESSED_DATA_DIR, DATASTORE_DIR, LOGS_DIR
 )
-from utils.logger import get_logger
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

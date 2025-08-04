@@ -17,6 +17,7 @@ class Settings:
     
     # Environment
     environment: str = os.getenv("ENVIRONMENT", "development")
+    debug: bool = os.getenv("DEBUG", "true").lower() == "true"
     
     # Smoothcomp Credentials
     smoothcomp_username: Optional[str] = os.getenv("SMOOTHCOMP_USERNAME")
@@ -31,6 +32,9 @@ class Settings:
     
     # Railway Deployment
     railway_volume_mount_path: Optional[str] = os.getenv("RAILWAY_VOLUME_MOUNT_PATH")
+    
+    # Data Storage
+    datastore_dir: Path = Path(os.getenv("DATASTORE_DIR", "data/datastore"))
 
 
 # Global settings instance

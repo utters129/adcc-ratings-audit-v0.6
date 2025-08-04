@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Error - ADCC Analysis Engine{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6 mx-auto text-center">
+        <div class="error-page">
+            <i class="fas fa-exclamation-triangle fa-5x text-warning mb-4"></i>
+            <h1 class="display-4 text-danger mb-4">Oops!</h1>
+            <h2 class="mb-4">{{ error or "Something went wrong" }}</h2>
+            <p class="lead mb-4">
+                We're sorry, but something unexpected happened. 
+                Please try again or contact support if the problem persists.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+                <button onclick="history.back()" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Go Back
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-page {
+    padding: 3rem 0;
+}
+
+.error-page i {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+</style>
+{% endblock %} 

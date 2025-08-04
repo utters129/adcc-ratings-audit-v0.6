@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Home - ADCC Analysis Engine{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 fw-bold text-primary mb-4">
+            <i class="fas fa-trophy"></i> ADCC Analysis Engine
+        </h1>
+        <p class="lead mb-4">
+            Advanced competition analysis and rating system for ADCC events. 
+            Track athlete performance, view leaderboards, and analyze competition data.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/leaderboards/absolute" class="btn btn-primary btn-lg">
+                <i class="fas fa-list-ol"></i> View Leaderboards
+            </a>
+            <a href="/athletes" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-users"></i> Browse Athletes
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Total Athletes</h5>
+                <h3 class="text-primary" id="totalAthletes">-</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-calendar fa-2x text-success mb-3"></i>
+                <h5 class="card-title">Active Events</h5>
+                <h3 class="text-success" id="activeEvents">-</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-trophy fa-2x text-warning mb-3"></i>
+                <h5 class="card-title">Divisions</h5>
+                <h3 class="text-warning">6</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-info mb-3"></i>
+                <h5 class="card-title">Total Matches</h5>
+                <h3 class="text-info" id="totalMatches">-</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Divisions Overview -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-list-ol"></i> Competition Divisions
+        </h2>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-weight"></i> Absolute
+                        </h5>
+                        <p class="card-text">Open weight division for all competitors.</p>
+                        <a href="/leaderboards/absolute" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-weight"></i> Under 88kg
+                        </h5>
+                        <p class="card-text">Weight-restricted division up to 88kg.</p>
+                        <a href="/leaderboards/under_88kg" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-weight"></i> Under 77kg
+                        </h5>
+                        <p class="card-text">Weight-restricted division up to 77kg.</p>
+                        <a href="/leaderboards/under_77kg" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-weight"></i> Under 66kg
+                        </h5>
+                        <p class="card-text">Weight-restricted division up to 66kg.</p>
+                        <a href="/leaderboards/under_66kg" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-venus"></i> Women Absolute
+                        </h5>
+                        <p class="card-text">Open weight division for women competitors.</p>
+                        <a href="/leaderboards/women_absolute" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-venus"></i> Women Under 60kg
+                        </h5>
+                        <p class="card-text">Weight-restricted division for women up to 60kg.</p>
+                        <a href="/leaderboards/women_under_60kg" class="btn btn-sm btn-primary">View Rankings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mb-5">
+    <div class="col-lg-6">
+        <h3 class="mb-4">
+            <i class="fas fa-calendar"></i> Recent Events
+        </h3>
+        <div id="recentEvents">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <h3 class="mb-4">
+            <i class="fas fa-star"></i> Top Athletes
+        </h3>
+        <div id="topAthletes">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-cogs"></i> System Features
+        </h2>
+        <div class="row">
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h5>Glicko Rating System</h5>
+                    <p class="text-muted">Advanced rating calculations for accurate athlete rankings.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="text-center">
+                    <i class="fas fa-search fa-3x text-success mb-3"></i>
+                    <h5>Advanced Search</h5>
+                    <p class="text-muted">Find athletes by name, club, country, or rating range.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="text-center">
+                    <i class="fas fa-history fa-3x text-warning mb-3"></i>
+                    <h5>Match History</h5>
+                    <p class="text-muted">Complete match records and performance tracking.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="text-center">
+                    <i class="fas fa-download fa-3x text-info mb-3"></i>
+                    <h5>Data Export</h5>
+                    <p class="text-muted">Export competition data and statistics.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load dashboard data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+});
+
+async function loadDashboardData() {
+    try {
+        // Load recent events
+        const eventsResponse = await fetch('/api/events/recent/events?limit=5');
+        if (eventsResponse.ok) {
+            const events = await eventsResponse.json();
+            displayRecentEvents(events);
+        }
+
+        // Load top athletes
+        const athletesResponse = await fetch('/api/leaderboards/global/top?limit=5');
+        if (athletesResponse.ok) {
+            const athletes = await athletesResponse.json();
+            displayTopAthletes(athletes);
+        }
+
+        // Load stats
+        loadStats();
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function displayRecentEvents(events) {
+    const container = document.getElementById('recentEvents');
+    
+    if (events.length === 0) {
+        container.innerHTML = '<p class="text-muted">No recent events found.</p>';
+        return;
+    }
+
+    const eventsHtml = events.map(event => `
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title">${event.name}</h6>
+                <p class="card-text small text-muted">
+                    <i class="fas fa-map-marker-alt"></i> ${event.location || 'Location TBD'}<br>
+                    <i class="fas fa-calendar"></i> ${new Date(event.date).toLocaleDateString()}<br>
+                    <i class="fas fa-users"></i> ${event.total_participants} participants
+                </p>
+                <span class="badge bg-${event.status === 'completed' ? 'success' : event.status === 'upcoming' ? 'warning' : 'info'}">${event.status}</span>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = eventsHtml;
+}
+
+function displayTopAthletes(athletes) {
+    const container = document.getElementById('topAthletes');
+    
+    if (athletes.length === 0) {
+        container.innerHTML = '<p class="text-muted">No athlete data available.</p>';
+        return;
+    }
+
+    const athletesHtml = athletes.map((entry, index) => `
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">#${entry.rank} ${entry.athlete.name}</h6>
+                        <p class="card-text small text-muted mb-0">
+                            <i class="fas fa-flag"></i> ${entry.athlete.country || 'Unknown'}<br>
+                            <i class="fas fa-building"></i> ${entry.athlete.club || 'Unknown Club'}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <h5 class="text-primary mb-0">${entry.athlete.glicko_rating.toFixed(0)}</h5>
+                        <small class="text-${entry.rating_change >= 0 ? 'success' : 'danger'}">
+                            ${entry.rating_change >= 0 ? '+' : ''}${entry.rating_change.toFixed(1)}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = athletesHtml;
+}
+
+async function loadStats() {
+    try {
+        // Load divisions summary for stats
+        const summaryResponse = await fetch('/api/leaderboards/divisions/summary');
+        if (summaryResponse.ok) {
+            const summary = await summaryResponse.json();
+            
+            let totalAthletes = 0;
+            let totalMatches = 0;
+            
+            Object.values(summary).forEach(division => {
+                totalAthletes += division.total_athletes;
+            });
+
+            // Update stats display
+            document.getElementById('totalAthletes').textContent = totalAthletes;
+            document.getElementById('totalMatches').textContent = totalMatches || '-';
+        }
+
+        // Load upcoming events count
+        const upcomingResponse = await fetch('/api/events/upcoming/events');
+        if (upcomingResponse.ok) {
+            const upcoming = await upcomingResponse.json();
+            document.getElementById('activeEvents').textContent = upcoming.length;
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+</script>
+{% endblock %} 
