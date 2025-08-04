@@ -211,29 +211,38 @@
 
 {% block extra_js %}
 <script>
-// Load dashboard data when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if login parameter is present in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('login') === 'true') {
+        // Show login modal
+        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        loginModal.show();
+    }
+    
+    // Load dashboard data
     loadDashboardData();
 });
 
 async function loadDashboardData() {
     try {
-        // Load recent events
-        const eventsResponse = await fetch('/api/events/recent/events?limit=5');
-        if (eventsResponse.ok) {
-            const events = await eventsResponse.json();
-            displayRecentEvents(events);
-        }
-
-        // Load top athletes
-        const athletesResponse = await fetch('/api/leaderboards/global/top?limit=5');
+        // Load athletes count
+        const athletesResponse = await fetch('/api/athletes');
         if (athletesResponse.ok) {
-            const athletes = await athletesResponse.json();
-            displayTopAthletes(athletes);
+            const athletesData = await athletesResponse.json();
+            document.getElementById('totalAthletes').textContent = athletesData.length || 0;
         }
-
-        // Load stats
-        loadStats();
+        
+        // Load events count
+        const eventsResponse = await fetch('/api/events');
+        if (eventsResponse.ok) {
+            const eventsData = await eventsResponse.json();
+            document.getElementById('activeEvents').textContent = eventsData.length || 0;
+        }
+        
+        // Load matches count (placeholder for now)
+        document.getElementById('totalMatches').textContent = '0';
+        
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
