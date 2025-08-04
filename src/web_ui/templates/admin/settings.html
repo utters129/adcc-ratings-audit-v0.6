@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - ADCC Analysis Engine{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cogs"></i> Admin Settings
+        </h1>
+        <p class="lead">Configure system settings and credentials.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-key"></i> Smoothcomp Credentials</h5>
+            </div>
+            <div class="card-body">
+                <form id="credentialsForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Credentials
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cog"></i> System Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="logLevel" class="form-label">Log Level</label>
+                    <select class="form-select" id="logLevel">
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO" selected>Info</option>
+                        <option value="WARNING">Warning</option>
+                        <option value="ERROR">Error</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="environment" class="form-label">Environment</label>
+                    <select class="form-select" id="environment">
+                        <option value="development">Development</option>
+                        <option value="production" selected>Production</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="saveSystemConfig()">
+                    <i class="fas fa-save"></i> Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle credentials form submission
+    document.getElementById('credentialsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveCredentials();
+    });
+});
+
+function saveCredentials() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    // In a real implementation, this would send to an API endpoint
+    console.log('Saving credentials:', { username, password: '***' });
+    alert('Credentials saved successfully!');
+}
+
+function saveSystemConfig() {
+    const logLevel = document.getElementById('logLevel').value;
+    const environment = document.getElementById('environment').value;
+    
+    // In a real implementation, this would send to an API endpoint
+    console.log('Saving system config:', { logLevel, environment });
+    alert('System configuration saved successfully!');
+}
+</script>
+{% endblock %} 

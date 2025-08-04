@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Data Import - ADCC Analysis Engine{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-upload"></i> Data Import
+        </h1>
+        <p class="lead">Import event data from Smoothcomp.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-database"></i> Import Event Data</h5>
+            </div>
+            <div class="card-body">
+                <form id="importForm">
+                    <div class="mb-3">
+                        <label for="eventUrl" class="form-label">Smoothcomp Event URL</label>
+                        <input type="url" class="form-control" id="eventUrl" name="eventUrl" 
+                               placeholder="https://smoothcomp.com/en/event/..." required>
+                        <div class="form-text">Enter the URL of the Smoothcomp event you want to import.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="importType" class="form-label">Import Type</label>
+                        <select class="form-select" id="importType" name="importType">
+                            <option value="full">Full Event (All Data)</option>
+                            <option value="matches">Matches Only</option>
+                            <option value="results">Results Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="updateExisting" name="updateExisting">
+                            <label class="form-check-label" for="updateExisting">
+                                Update existing data if event already exists
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Start Import
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Import Status</h5>
+            </div>
+            <div class="card-body">
+                <div id="importStatus">
+                    <p class="text-muted">No import in progress.</p>
+                </div>
+                <div id="importProgress" style="display: none;">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText">Initializing...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Imports</h5>
+            </div>
+            <div class="card-body">
+                <div id="recentImports">
+                    <p class="text-muted">No recent imports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle import form submission
+    document.getElementById('importForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        startImport();
+    });
+});
+
+function startImport() {
+    const eventUrl = document.getElementById('eventUrl').value;
+    const importType = document.getElementById('importType').value;
+    const updateExisting = document.getElementById('updateExisting').checked;
+    
+    // Show progress
+    document.getElementById('importStatus').style.display = 'none';
+    document.getElementById('importProgress').style.display = 'block';
+    
+    // Simulate import process
+    simulateImport(eventUrl, importType, updateExisting);
+}
+
+function simulateImport(eventUrl, importType, updateExisting) {
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.getElementById('progressText');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+        progress += 10;
+        progressBar.style.width = progress + '%';
+        
+        if (progress <= 30) {
+            progressText.textContent = 'Connecting to Smoothcomp...';
+        } else if (progress <= 60) {
+            progressText.textContent = 'Downloading event data...';
+        } else if (progress <= 90) {
+            progressText.textContent = 'Processing and analyzing data...';
+        } else {
+            progressText.textContent = 'Import completed successfully!';
+            clearInterval(interval);
+            
+            // Show success message
+            setTimeout(() => {
+                alert('Event data imported successfully!');
+                document.getElementById('importProgress').style.display = 'none';
+                document.getElementById('importStatus').style.display = 'block';
+                document.getElementById('importStatus').innerHTML = '<p class="text-success">Last import: ' + new Date().toLocaleString() + '</p>';
+            }, 1000);
+        }
+    }, 500);
+}
+</script>
+{% endblock %} 
