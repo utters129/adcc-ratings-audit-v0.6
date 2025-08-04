@@ -129,20 +129,44 @@ async def debug_static():
 
 @app.get("/static/js/main.js")
 async def serve_main_js():
-    """Serve main.js with proper MIME type."""
+    """Serve main.js with proper MIME type and CORS headers."""
+    from fastapi.responses import Response
     js_file = Path(__file__).parent / "static" / "js" / "main.js"
     if js_file.exists():
-        return FileResponse(js_file, media_type="application/javascript")
+        with open(js_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return Response(
+            content=content,
+            media_type="application/javascript",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Cache-Control": "no-cache"
+            }
+        )
     else:
         raise HTTPException(status_code=404, detail="main.js not found")
 
 
 @app.get("/static/css/style.css")
 async def serve_style_css():
-    """Serve style.css with proper MIME type."""
+    """Serve style.css with proper MIME type and CORS headers."""
+    from fastapi.responses import Response
     css_file = Path(__file__).parent / "static" / "css" / "style.css"
     if css_file.exists():
-        return FileResponse(css_file, media_type="text/css")
+        with open(css_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return Response(
+            content=content,
+            media_type="text/css",
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Cache-Control": "no-cache"
+            }
+        )
     else:
         raise HTTPException(status_code=404, detail="style.css not found")
 
