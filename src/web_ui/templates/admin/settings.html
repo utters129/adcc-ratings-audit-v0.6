@@ -19,17 +19,41 @@
                 <h5><i class="fas fa-key"></i> Smoothcomp Credentials</h5>
             </div>
             <div class="card-body">
+                <div id="currentCredentials">
+                    <p class="text-muted">Loading current credentials...</p>
+                </div>
+                
+                <hr>
+                
+                <h6>Test Current Credentials</h6>
+                <button type="button" class="btn btn-info" onclick="testCredentials()">
+                    <i class="fas fa-check"></i> Test Connection
+                </button>
+                
+                <div id="testResult" class="mt-3" style="display: none;">
+                    <!-- Test results will be displayed here -->
+                </div>
+                
+                <hr>
+                
+                <h6>Update Credentials</h6>
+                <p class="text-muted small">
+                    Note: Credentials are managed through Railway environment variables. 
+                    To update them, go to your Railway dashboard and modify the environment variables.
+                </p>
                 <form id="credentialsForm">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Enter new username" required>
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Enter new password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Credentials
+                    <button type="submit" class="btn btn-primary" disabled>
+                        <i class="fas fa-save"></i> Save Credentials (Railway Only)
                     </button>
                 </form>
             </div>
@@ -42,6 +66,12 @@
                 <h5><i class="fas fa-cog"></i> System Configuration</h5>
             </div>
             <div class="card-body">
+                <div id="systemInfo">
+                    <p class="text-muted">Loading system information...</p>
+                </div>
+                
+                <hr>
+                
                 <div class="mb-3">
                     <label for="logLevel" class="form-label">Log Level</label>
                     <select class="form-select" id="logLevel">
@@ -63,6 +93,23 @@
                 </button>
             </div>
         </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Railway Environment</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Your application is running on Railway with the following environment variables:
+                </p>
+                <ul class="list-unstyled">
+                    <li><strong>Environment:</strong> <span id="railwayEnv">Loading...</span></li>
+                    <li><strong>Debug Mode:</strong> <span id="railwayDebug">Loading...</span></li>
+                    <li><strong>Data Store:</strong> <span id="railwayDataStore">Loading...</span></li>
+                    <li><strong>Credentials:</strong> <span id="railwayCredentials">Loading...</span></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -70,20 +117,139 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Load current credentials and system info
+    loadCurrentCredentials();
+    loadSystemInfo();
+    
     // Handle credentials form submission
     document.getElementById('credentialsForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        saveCredentials();
+        alert('To update credentials, please go to your Railway dashboard and modify the environment variables directly.');
     });
 });
 
-function saveCredentials() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+async function loadCurrentCredentials() {
+    try {
+        const response = await fetch('/admin/api/credentials');
+        if (response.ok) {
+            const data = await response.json();
+            
+            const credentialsDiv = document.getElementById('currentCredentials');
+            if (data.credentials_configured) {
+                credentialsDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6>Current Credentials (Railway Environment)</h6>
+                        <p><strong>Username:</strong> ${data.username}</p>
+                        <p><strong>Password:</strong> ${data.password_set ? 'Set' : 'Not set'}</p>
+                        <p class="text-success mb-0"><i class="fas fa-check"></i> Credentials configured</p>
+                    </div>
+                `;
+            } else {
+                credentialsDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6>Current Credentials (Railway Environment)</h6>
+                        <p><strong>Username:</strong> Not configured</p>
+                        <p><strong>Password:</strong> Not configured</p>
+                        <p class="text-warning mb-0"><i class="fas fa-exclamation-triangle"></i> Credentials not configured</p>
+                    </div>
+                `;
+            }
+        } else {
+            document.getElementById('currentCredentials').innerHTML = `
+                <div class="alert alert-danger">
+                    <p class="mb-0">Failed to load credentials</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading credentials:', error);
+        document.getElementById('currentCredentials').innerHTML = `
+            <div class="alert alert-danger">
+                <p class="mb-0">Error loading credentials</p>
+            </div>
+        `;
+    }
+}
+
+async function loadSystemInfo() {
+    try {
+        const response = await fetch('/admin/api/system-info');
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update system info
+            document.getElementById('systemInfo').innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>Environment:</strong> ${data.environment}</p>
+                        <p><strong>Debug Mode:</strong> ${data.debug_mode ? 'Yes' : 'No'}</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>Version:</strong> ${data.version}</p>
+                        <p><strong>Data Store:</strong> ${data.datastore_directory}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Update Railway environment info
+            document.getElementById('railwayEnv').textContent = data.environment;
+            document.getElementById('railwayDebug').textContent = data.debug_mode ? 'Yes' : 'No';
+            document.getElementById('railwayDataStore').textContent = data.datastore_directory;
+            document.getElementById('railwayCredentials').textContent = data.credentials_configured ? 'Configured' : 'Not configured';
+            
+        } else {
+            document.getElementById('systemInfo').innerHTML = `
+                <div class="alert alert-danger">
+                    <p class="mb-0">Failed to load system information</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading system info:', error);
+        document.getElementById('systemInfo').innerHTML = `
+            <div class="alert alert-danger">
+                <p class="mb-0">Error loading system information</p>
+            </div>
+        `;
+    }
+}
+
+async function testCredentials() {
+    const testResult = document.getElementById('testResult');
+    testResult.style.display = 'block';
+    testResult.innerHTML = '<p class="text-info"><i class="fas fa-spinner fa-spin"></i> Testing credentials...</p>';
     
-    // In a real implementation, this would send to an API endpoint
-    console.log('Saving credentials:', { username, password: '***' });
-    alert('Credentials saved successfully!');
+    try {
+        const response = await fetch('/admin/api/credentials/test', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            testResult.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-check"></i> Connection Test Successful</h6>
+                    <p class="mb-0">${data.message}</p>
+                </div>
+            `;
+        } else {
+            testResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-times"></i> Connection Test Failed</h6>
+                    <p class="mb-0">${data.message}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error testing credentials:', error);
+        testResult.innerHTML = `
+            <div class="alert alert-danger">
+                <h6><i class="fas fa-times"></i> Connection Test Failed</h6>
+                <p class="mb-0">Error: ${error.message}</p>
+            </div>
+        `;
+    }
 }
 
 function saveSystemConfig() {
