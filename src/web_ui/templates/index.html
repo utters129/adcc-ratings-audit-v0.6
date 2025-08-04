@@ -311,8 +311,11 @@ function displayTopAthletes(athletes) {
 
 async function loadStats() {
     try {
+        // Use absolute HTTPS URLs to avoid mixed content errors
+        const baseUrl = 'https://web-production-fffa07.up.railway.app';
+        
         // Load divisions summary for stats
-        const summaryResponse = await fetch('/api/leaderboards/divisions/summary');
+        const summaryResponse = await fetch(`${baseUrl}/api/leaderboards/divisions/summary`);
         if (summaryResponse.ok) {
             const summary = await summaryResponse.json();
             
@@ -329,7 +332,7 @@ async function loadStats() {
         }
 
         // Load upcoming events count
-        const upcomingResponse = await fetch('/api/events/upcoming/events');
+        const upcomingResponse = await fetch(`${baseUrl}/api/events/upcoming/events`);
         if (upcomingResponse.ok) {
             const upcoming = await upcomingResponse.json();
             document.getElementById('activeEvents').textContent = upcoming.length;
