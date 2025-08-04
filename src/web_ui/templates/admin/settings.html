@@ -130,7 +130,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadCurrentCredentials() {
     try {
-        const response = await fetch('/admin/api/credentials');
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem('authToken');
+        
+        const response = await fetch('/admin/api/credentials', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (response.ok) {
             const data = await response.json();
             
@@ -154,10 +163,13 @@ async function loadCurrentCredentials() {
                     </div>
                 `;
             }
+        } else if (response.status === 401) {
+            // Redirect to login if not authenticated
+            window.location.href = '/?login=true';
         } else {
             document.getElementById('currentCredentials').innerHTML = `
                 <div class="alert alert-danger">
-                    <p class="mb-0">Failed to load credentials</p>
+                    <p class="mb-0">Failed to load credentials (Status: ${response.status})</p>
                 </div>
             `;
         }
@@ -173,7 +185,16 @@ async function loadCurrentCredentials() {
 
 async function loadSystemInfo() {
     try {
-        const response = await fetch('/admin/api/system-info');
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem('authToken');
+        
+        const response = await fetch('/admin/api/system-info', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (response.ok) {
             const data = await response.json();
             
@@ -197,10 +218,13 @@ async function loadSystemInfo() {
             document.getElementById('railwayDataStore').textContent = data.datastore_directory;
             document.getElementById('railwayCredentials').textContent = data.credentials_configured ? 'Configured' : 'Not configured';
             
+        } else if (response.status === 401) {
+            // Redirect to login if not authenticated
+            window.location.href = '/?login=true';
         } else {
             document.getElementById('systemInfo').innerHTML = `
                 <div class="alert alert-danger">
-                    <p class="mb-0">Failed to load system information</p>
+                    <p class="mb-0">Failed to load system information (Status: ${response.status})</p>
                 </div>
             `;
         }
@@ -220,8 +244,15 @@ async function testCredentials() {
     testResult.innerHTML = '<p class="text-info"><i class="fas fa-spinner fa-spin"></i> Testing credentials...</p>';
     
     try {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem('authToken');
+        
         const response = await fetch('/admin/api/credentials/test', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
         });
         
         const data = await response.json();

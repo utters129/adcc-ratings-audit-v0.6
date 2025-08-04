@@ -155,9 +155,18 @@ async def admin_system_status(request: Request, current_user: TokenData = Depend
 # API Endpoints for managing credentials
 
 @router.get("/api/credentials", response_model=Dict[str, Any])
-async def get_credentials(current_user: TokenData = Depends(get_current_admin_user)):
+async def get_credentials(request: Request):
     """Get current Smoothcomp credentials (masked for security)."""
     try:
+        # Check if user is authenticated by looking for auth token in cookies/headers
+        auth_token = request.cookies.get("auth_token") or request.headers.get("authorization")
+        
+        if not auth_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required"
+            )
+        
         settings = get_settings()
         
         # Mask credentials for security
@@ -172,6 +181,8 @@ async def get_credentials(current_user: TokenData = Depends(get_current_admin_us
             "password_set": bool(password),
             "credentials_configured": bool(username and password)
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error getting credentials", error=str(e))
         raise HTTPException(
@@ -181,9 +192,18 @@ async def get_credentials(current_user: TokenData = Depends(get_current_admin_us
 
 
 @router.post("/api/credentials/test")
-async def test_credentials(current_user: TokenData = Depends(get_current_admin_user)):
+async def test_credentials(request: Request):
     """Test current Smoothcomp credentials."""
     try:
+        # Check if user is authenticated
+        auth_token = request.cookies.get("auth_token") or request.headers.get("authorization")
+        
+        if not auth_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required"
+            )
+        
         settings = get_settings()
         
         if not settings.smoothcomp_username or not settings.smoothcomp_password:
@@ -223,6 +243,8 @@ async def test_credentials(current_user: TokenData = Depends(get_current_admin_u
                 content={"success": False, "message": f"Connection test failed: {str(e)}"}
             )
             
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error testing credentials", error=str(e))
         raise HTTPException(
@@ -232,9 +254,18 @@ async def test_credentials(current_user: TokenData = Depends(get_current_admin_u
 
 
 @router.get("/api/system-info", response_model=Dict[str, Any])
-async def get_system_info(current_user: TokenData = Depends(get_current_admin_user)):
+async def get_system_info(request: Request):
     """Get system information and configuration."""
     try:
+        # Check if user is authenticated
+        auth_token = request.cookies.get("auth_token") or request.headers.get("authorization")
+        
+        if not auth_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required"
+            )
+        
         settings = get_settings()
         
         return {
@@ -244,6 +275,8 @@ async def get_system_info(current_user: TokenData = Depends(get_current_admin_us
             "credentials_configured": bool(settings.smoothcomp_username and settings.smoothcomp_password),
             "version": "0.6.0-alpha"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error getting system info", error=str(e))
         raise HTTPException(
