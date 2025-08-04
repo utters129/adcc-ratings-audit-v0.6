@@ -9,9 +9,9 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import structlog
@@ -125,6 +125,26 @@ async def debug_static():
         "static_files": static_files,
         "static_url": "/static"
     }
+
+
+@app.get("/static/js/main.js")
+async def serve_main_js():
+    """Serve main.js with proper MIME type."""
+    js_file = Path(__file__).parent / "static" / "js" / "main.js"
+    if js_file.exists():
+        return FileResponse(js_file, media_type="application/javascript")
+    else:
+        raise HTTPException(status_code=404, detail="main.js not found")
+
+
+@app.get("/static/css/style.css")
+async def serve_style_css():
+    """Serve style.css with proper MIME type."""
+    css_file = Path(__file__).parent / "static" / "css" / "style.css"
+    if css_file.exists():
+        return FileResponse(css_file, media_type="text/css")
+    else:
+        raise HTTPException(status_code=404, detail="style.css not found")
 
 
 @app.exception_handler(404)
