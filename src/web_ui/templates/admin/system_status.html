@@ -146,15 +146,18 @@ function updateSystemStatus() {
 
 async function loadDataStatistics() {
     try {
+        // Use absolute HTTPS URLs to avoid mixed content errors
+        const baseUrl = 'https://web-production-fffa07.up.railway.app';
+        
         // Load athletes count
-        const athletesResponse = await fetch('/api/athletes');
+        const athletesResponse = await fetch(`${baseUrl}/api/athletes`);
         if (athletesResponse.ok) {
             const athletesData = await athletesResponse.json();
             document.getElementById('totalAthletes').textContent = athletesData.length || 0;
         }
         
         // Load events count
-        const eventsResponse = await fetch('/api/events');
+        const eventsResponse = await fetch(`${baseUrl}/api/events`);
         if (eventsResponse.ok) {
             const eventsData = await eventsResponse.json();
             document.getElementById('totalEvents').textContent = eventsData.length || 0;

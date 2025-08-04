@@ -133,7 +133,10 @@ async function loadCurrentCredentials() {
         // Get auth token from localStorage
         const authToken = localStorage.getItem('authToken');
         
-        const response = await fetch('/admin/api/credentials', {
+        // Use absolute HTTPS URL to avoid mixed content errors
+        const baseUrl = 'https://web-production-fffa07.up.railway.app';
+        
+        const response = await fetch(`${baseUrl}/admin/api/credentials`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
@@ -188,7 +191,10 @@ async function loadSystemInfo() {
         // Get auth token from localStorage
         const authToken = localStorage.getItem('authToken');
         
-        const response = await fetch('/admin/api/system-info', {
+        // Use absolute HTTPS URL to avoid mixed content errors
+        const baseUrl = 'https://web-production-fffa07.up.railway.app';
+        
+        const response = await fetch(`${baseUrl}/admin/api/system-info`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
@@ -247,7 +253,10 @@ async function testCredentials() {
         // Get auth token from localStorage
         const authToken = localStorage.getItem('authToken');
         
-        const response = await fetch('/admin/api/credentials/test', {
+        // Use absolute HTTPS URL to avoid mixed content errors
+        const baseUrl = 'https://web-production-fffa07.up.railway.app';
+        
+        const response = await fetch(`${baseUrl}/admin/api/credentials/test`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
