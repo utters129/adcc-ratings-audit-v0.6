@@ -48,8 +48,19 @@ app.add_middleware(
 static_dir = Path(__file__).parent / "static"
 templates_dir = Path(__file__).parent / "templates"
 
+# Log static file setup
+logger.info(f"Static directory: {static_dir}")
+logger.info(f"Static directory exists: {static_dir.exists()}")
 if static_dir.exists():
+    logger.info(f"Static files found: {list(static_dir.rglob('*'))}")
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+else:
+    logger.error(f"Static directory not found: {static_dir}")
+
+logger.info(f"Templates directory: {templates_dir}")
+logger.info(f"Templates directory exists: {templates_dir.exists()}")
+if templates_dir.exists():
+    logger.info(f"Template files found: {list(templates_dir.rglob('*.html'))}")
 
 templates = Jinja2Templates(directory=str(templates_dir))
 
@@ -95,6 +106,25 @@ async def index(request: Request):
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "version": "0.6.0-alpha"}
+
+
+@app.get("/debug/static")
+async def debug_static():
+    """Debug endpoint to check static file configuration."""
+    static_dir = Path(__file__).parent / "static"
+    static_files = []
+    
+    if static_dir.exists():
+        for file_path in static_dir.rglob('*'):
+            if file_path.is_file():
+                static_files.append(str(file_path.relative_to(static_dir)))
+    
+    return {
+        "static_dir": str(static_dir),
+        "static_dir_exists": static_dir.exists(),
+        "static_files": static_files,
+        "static_url": "/static"
+    }
 
 
 @app.exception_handler(404)
