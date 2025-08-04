@@ -17,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 import structlog
 
 from src.config.settings import get_settings
-from src.web_ui.api import auth, athletes, events, leaderboards
+from src.web_ui.api import auth, athletes, events, leaderboards, admin
 from src.web_ui.models.schemas import ErrorResponse
 
 # Configure logging
@@ -69,6 +69,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(athletes.router, prefix="/api/athletes", tags=["Athletes"])
 app.include_router(events.router, prefix="/api/events", tags=["Events"])
 app.include_router(leaderboards.router, prefix="/api/leaderboards", tags=["Leaderboards"])
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 
 @app.on_event("startup")

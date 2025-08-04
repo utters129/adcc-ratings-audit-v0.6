@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - ADCC Analysis Engine{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog"></i> Admin Dashboard
+        </h1>
+        <p class="lead">Welcome to the ADCC Analysis Engine administration panel.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-database fa-2x text-primary mb-3"></i>
+                <h5 class="card-title">Data Import</h5>
+                <p class="card-text">Import event data from Smoothcomp</p>
+                <a href="/admin/data-import" class="btn btn-primary">Import Data</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-cogs fa-2x text-success mb-3"></i>
+                <h5 class="card-title">Settings</h5>
+                <p class="card-text">Configure system settings</p>
+                <a href="/admin/settings" class="btn btn-success">Manage Settings</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-info mb-3"></i>
+                <h5 class="card-title">System Status</h5>
+                <p class="card-text">Monitor system health</p>
+                <a href="/admin/system-status" class="btn btn-info">View Status</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-users fa-2x text-warning mb-3"></i>
+                <h5 class="card-title">User Management</h5>
+                <p class="card-text">Manage user accounts</p>
+                <a href="/admin/users" class="btn btn-warning">Manage Users</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="/admin/data-import" class="list-group-item list-group-item-action">
+                        <i class="fas fa-upload"></i> Import New Event Data
+                    </a>
+                    <a href="/admin/settings" class="list-group-item list-group-item-action">
+                        <i class="fas fa-key"></i> Update Smoothcomp Credentials
+                    </a>
+                    <a href="/admin/system-status" class="list-group-item list-group-item-action">
+                        <i class="fas fa-heartbeat"></i> Check System Health
+                    </a>
+                    <a href="/api/docs" class="list-group-item list-group-item-action">
+                        <i class="fas fa-book"></i> API Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> System Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Version:</strong></td>
+                        <td>v0.6.0-alpha</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Environment:</strong></td>
+                        <td>Production</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td><span class="badge bg-success">Online</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Last Updated:</strong></td>
+                        <td id="lastUpdated">Loading...</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update last updated time
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+});
+</script>
+{% endblock %} 
